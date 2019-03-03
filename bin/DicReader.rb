@@ -1,6 +1,7 @@
 # encoding: GBK
-require '../src/DicDeclaimer.rb'
-system('color F0') # 白底黑字
+require './DicDeclaimer.rb'
+system 'color F0' # 白底黑字
+Dir.chdir '../dics'
 
 def m_explains(mode = 0) # mode = 1 : 只显示例句的模式
   if @ln == 26
@@ -24,8 +25,8 @@ def m_explains(mode = 0) # mode = 1 : 只显示例句的模式
         declaim x[1]
         print "\n \033[1;41;37m#{eng[0]}]\033[0m#{eng[1]}	\033[1;4;7;40;37m#{x[1]}\033[0m\n" # 标出词性、中文释义
       end
-      puts; print "\033[s 直接回车查看下一个单词；输入任意内容以查看网络例句: "
-      if $stdin.gets == "\n" then print("\033[1A ----------------------------------------------------------------------------------------\n\n"); return true end
+      puts; print "\033[s 按 S 查看下一个单词；或按 D 以查看网络例句: "
+      if getinput('sd') == 's' then print("\033[1A ----------------------------------------------------------------------------------------\n\n"); return true end
     end
     if @exmp[@wd[0]].empty? then print "\033[u 暂时没有可用或可靠的网络例句. "; system('pause') end
     @exmp[@wd[0]].each_with_index do |x, i|
@@ -33,8 +34,8 @@ def m_explains(mode = 0) # mode = 1 : 只显示例句的模式
       print "\033[1;41;37m例句\033[0m	\033[1;4;7;44;37m#{i + 1})\033[0m "
       puts x[0].gsub(/(?<foo>\b#{@wd[0][0..-2]}.*?\b)/i, "\033[7m\\k<foo>\033[0m") # 标出例句中的单词，考虑了三单、过去、现在的变形 (\b匹配单词边界, 加?表示非贪心, 找到最近的边界)
       puts; print '	'; print x[1]; print '	'; puts "\033[1;7;47;37m#{x[2]}\033[0m" # 例句来源
-      puts; print ' 直接回车查看下一个例句或继续; 输入任意内容并回车以结束: '
-      break unless $stdin.gets == "\n"
+      puts; print ' 按 D 查看下一个例句或继续; 或按 S 以结束: '
+      break if getinput('sd') == 's'
     end
   end
   print("\033[1A ----------------------------------------------------------------------------------------\n\n") if mode.zero?
@@ -44,13 +45,13 @@ loop do
   begin # Ctrl+C 退出当前
     `title GRE 佛脚单词复习 by Z. S.`
     @ln = 0; print "\n\033[s"
-    while @ln.zero? # 如果输入得不对就重来
-      print "\033[u"; sleep(0.05); print "\033[K"; print "\033[s词表号 (1~26, 26 = 短语, 以 m 结尾表示静音不朗读单词及释义): "
-      @ln = $stdin.gets.chomp
-      $use_voice = (@ln[-1] != 'm')
-      @ln = @ln.to_i
+    while @ln < 1 or @ln > 26 # 如果输入得不对就重来
+      print "\033[u"; sleep(0.05); print "\033[K"; print "\r请键入词表号 (1~26, 26 = 短语, 以 A 结尾表示静音): "; sleep(0.05);print "\033[s"
+      print "\n\n键入前一个数字后, 有 1 秒钟的间隔以键入下一个数字. 或者可按 S 直接确认; 或按 A 确认并进入静音模式, 将不朗读单词及释义.\033[u"
+      @ln = getnumber
     end
 
+    print "\033[J" # 清除后边的所有文本
     @rec = [0] # 读入背词记录
     fls = Dir.entries('Dic_%02d' % @ln)
     fls.each {|i| if i[0, 6] == ('Dic_%02d' % @ln) and i[-4, 4] == '.txt' then n = i.split('_')[2].to_i; @rec.push(n) unless n.zero? end}
@@ -79,13 +80,13 @@ loop do
     if @hash.size.zero?
       puts; puts '该列表 %02d 的单词已全部认识.' % @ln
     else
-      puts; print '直接回车可随机显示单词, 或输入任意文本并回车以顺序显示单词: '
+      puts; print '按 S 可随机显示单词, 或按 D 以顺序显示单词: '
       @wnl = @hash.values; random = false
-      if $stdin.gets == "\n" then random = true; @wnl.shuffle! end # 打乱顺序
-      system('cls'); `title 词表 #{@ln}, 共 #{@list.size} 词, #{random ? '随机' : '顺序'}模式`
+      if getinput('sd') == 's' then random = true; @wnl.shuffle! end # 打乱顺序
+      system('cls'); `title 词表 #{@ln}, 共 #{@list.size} 词, #{random ? '随机' : '顺序'} ^| #{$use_voice ? '朗读' : '静音'}模式`
 
-      puts; puts '提示: 直接回车表示认识该单词, 下次将从单词列表中去除. 本词表任务结束后, 将生成 "Dic_%02d_xxx.txt" 的已背词记录, 记录号 xxx 越大, 表示记录越新, 999 号记录即包括所有单词. 若误按回车, 可在下一个单词处输入任意数字 (0~9) 并回车以撤销.' % @ln
-      puts; puts '输入任意字母 (A~Z, a~z) 并回车以查看网络例句 (由百度翻译提供); 输入任意其余字符表示不认识该单词, 将显示双语释义, 并保留在单词列表中.'
+      puts; puts '提示: 每次显示单词后, 按下 [W/A/S/D] 键以控制. 按 S 表示认识该单词, 下次将从单词列表中去除. 本词表任务结束后, 将生成 "Dic_%02d_###.txt" 的已背词记录, 记录号 ### 越大, 表示记录越新, 999 号记录即包括所有单词. 若按错控制键, 可在下一个单词处按 W 以撤销.' % @ln
+      puts; puts 'W = 上一单词; S = 下一单词; D = 查看详细信息 (网络例句由百度翻译提供); A = 不认识该单词, 将显示双语释义, 并保留在单词列表中. 按下 W 后, 将按顺序朗读单词释义, 过程中可按任意键以中断. 任何等待用户输入处均可按 Ctrl+C 以跳出当前过程并返回上一界面.'; puts
       system('pause'); system('cls'); puts
     end
 
@@ -95,17 +96,18 @@ loop do
       @wn += 1; `title 词表 #{@ln}, 进度 #{@wn} / #{@hash.size}`
       @wd = @list[@wnl[@wn - 1]]
       declaim('', 3) # 清空当前朗读任务
-      print " \033[1;4;7;44;37m[#{@wnl[@wn - 1] + 1}]\033[0m "; print @wd[0]; declaim @wd[0]; print '	'
-      r = $stdin.gets
-      if r == "\n"
+      print " \033[1;4;7;44;37m[#{@wnl[@wn - 1] + 1}]\033[0m "; print @wd[0]; declaim(@wd[0], 1, 1); print '	'
+      r = getinput('wasd')
+      case r
+      when 's'
         @known.push(@wnl[@wn - 1]) # 认识单词, 仍然显示、朗读中文释义
         print "\033[1A\033[45C \033[1;7;42;37m已认识 \033[0m\033[1;41;37m ("; @wd[1].each {|x| print x[1] + '; '; declaim(x[1], 0)}
         print "\033[2D)\033[0m\r\033[s\n\n"; print " ----------------------------------------------------------------------------------------\n\n"
-      elsif (r.ord > 64 and r.ord < 91) or (r.ord > 96 and r.ord < 123) # [a-zA-Z]: 显示例句
+      when 'd'
         puts; print "\033[s"
         m_explains(1)
         print("\033[u\033[2A"); sleep(0.05); print "\033[J"; sleep(0.05); @wn -= 1
-      elsif r.ord > 47 and r.ord < 58
+      when 'w'
         if @wn > 1
           print "\033[u"; sleep(0.05); print "\033[J"; sleep(0.05) # 返回上一处保留的位置
           @wn -= 2; @known.delete(@wnl[@wn]) # 回退至上一单词, 从已认识词表中删除本单词
@@ -132,23 +134,25 @@ loop do
 
     loop do
       begin # Ctrl+C 退出当前
-        puts "\n-----------------------------------------------------------------------------------------\n\n接下来, 直接回车将回到最开始的选择列表页面, 或者可以输入相应的数字并回车以复习之前的背词记录 (如果有的话. 下一行显示了可用的记录号): \033[s"
+        puts "\n-----------------------------------------------------------------------------------------\n\n接下来, 按 [A/S] 键将回到最开始的选择列表页面, 或者键入相应记录号以复习之前的背词记录 (如果有的话. 注意 “1 秒钟间隔”, 可用 [A/S] 切换静音/朗读模式). 下一行显示了可用的记录号: \033[s"
         @rec[1..-1].each {|j| puts("\n\033[7m%03d\033[0m	" % j + File.mtime('Dic_%02d/Dic_%02d_%03d.txt' % [@ln, @ln, j]).to_s)}
-        print "\033[u"; @rn = $stdin.gets.chomp.to_i
-        system('cls')
+        print "\033[u"; @rn = getnumber
+        print "\033[J"
         if @rec[1..-1].include?(@rn)
-          puts; print '直接回车可随机显示单词, 或输入任意文本并回车以顺序显示单词: '
+          puts; print '按 S 可随机显示单词, 或按 D 以顺序显示单词: '
           @wnl = @hash_del[@rn].values.sort; random = false
-          if $stdin.gets == "\n" then random = true; @wnl.shuffle! end
-          puts "\n你选择了#{random ? '随机' : '顺序'}模式. 当每个单词出现后, 请按回车键继续, 或输入数字 (1~9) 回到上一条目, 或输入其余任意内容以将该词语重新纳入至生词本."; system('pause'); system('cls'); puts
+          if getinput('sd') == 's' then random = true; @wnl.shuffle! end
+          print "\n你选择了#{random ? '随机' : '顺序'} | #{$use_voice ? '朗读' : '静音'}模式. 当每个单词出现后, 请用 [W/A/S] 键控制: S = 上一单词, W = 下一单词, A = 将该词语重新纳入至生词本.\n\n"; system('pause'); system('cls'); puts
 
           @wn = 0; @patch = [] # patch为重新不认识的单词, 需要从已认识词表中重新剔除
           while @wn < @hash_del[@rn].size
             @wn += 1; `title 词表 #{@ln}, 记录 #{'%03d' % @rn}, 进度 #{@wn} / #{@hash_del[@rn].size}`
             @wd = @list[@wnl[@wn - 1]]
-            print " \033[1;4;7;44;37m[#{@wnl[@wn - 1] + 1}]\033[0m "; print @wd[0]; declaim @wd[0]; print '	'; r = $stdin.gets.chomp
-            if r.empty?
-            elsif r.ord > 47 and r.ord < 58 # 返回上一个单词, 该单词不列入patch列表
+            print " \033[1;4;7;44;37m[#{@wnl[@wn - 1] + 1}]\033[0m "; print @wd[0]; declaim(@wd[0], 1, 1)
+            print '	'; r = getinput('was').downcase.chomp
+            case r
+            when 's'
+            when 'w' # 返回上一个单词, 该单词不列入patch列表
               if @wn > 1
                 print "\033[u"; sleep(0.05); print "\033[J"; sleep(0.05)
                 @wn -= 2; @patch.delete(@list[@wnl[@wn]][0])
@@ -169,7 +173,7 @@ loop do
           f = open('Dic_%02d/Dic_%02d_%03d.txt' % [@ln, @ln, @rn], 'w')
           f.write(@list_tmp.to_s); f.close # 重新写入已认识词表
         else
-          break
+          system('cls'); break
         end
       rescue Interrupt
         next

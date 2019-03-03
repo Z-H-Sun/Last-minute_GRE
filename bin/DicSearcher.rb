@@ -1,7 +1,9 @@
 # encoding: GBK
 #`mode con cols=100`
-require '../src/DicDeclaimer.rb'
-system('color F0'); @hash = {}; @list = []; @exmp = {}
+require './DicDeclaimer.rb'
+system 'color F0'
+Dir.chdir '../dics'
+@hash = {}; @list = []; @exmp = {}
 `title GRE 佛脚单词查找 by Z. S.`
 
 for n in '01'..'26'
@@ -21,7 +23,8 @@ loop do
   begin
     print "\n 请输入要查找的单词/短语或中文释义, 程序将列出所有 \033[1;4;7;44;37m包含\033[0m 输入内容的结果 (支持正则表达式): \033[s"
     print "\n\n 例如: \033[7mCret\033[0m 可匹配 \033[7mconcrete\033[0m; \033[7m^bi.ho\033[0m 可匹配 \033[7mbishop\033[0m; \033[7mno.*aL$\033[0m 可匹配 \033[7mnominal\033[0m; \033[7m错乱\033[0m 可匹配 \033[7manachronism\033[0m.\033[u"
-    c = $stdin.gets.chomp
+
+    c = getinput
     sleep(0.05); print "\033[J"; sleep(0.05)
     begin
       @result = c.empty? ? [] : @hash.keys.find_all {|x| x.split('||')[0].match(c.downcase)}; puts # 正则表达式匹配
@@ -45,20 +48,21 @@ loop do
     while @input.size < @result.size # 不允许输入重复的编号
       if @result.size != 1
         while @ln.zero? or @ln > @result.size or @input.include?(@ln)
-          print "\033[u"; sleep(0.05); print "\033[K"; print "\033[s 请选择需要显示的单词/短语所对应的编号 (以 m 结尾表示不朗读单词及释义), 或直接回车以结束: "
-          @ln = $stdin.gets.chomp
-          $use_voice = (@ln[-1] != 'm')
-          @ln = @ln.empty? ? -1 : @ln.to_i
+          print "\033[u"; sleep(0.05); print "\033[K"; print "\r 请键入单词/短语所对应的编号 (以 A 结尾表示不朗读单词及释义), 或按 [A/S] 键以结束: "; sleep(0.05);print "\033[s"
+          print "\n\n 键入前一个数字后, 有 1 秒钟的间隔以键入下一个数字. 或可按 [A/S] 直接确认; 前者将不朗读单词及释义.\033[u"
+          @ln = getnumber
+          @ln = -1 if @ln.zero?
         end
         if @ln < 0 then break end # 不必循环
       end
+      print "\033[J" # 清除后边的所有文本
       @input.push(@ln) # 列入已选择的编号
 
       lin, wdn = @hash[@result[@ln - 1]]; lin = lin.to_i - 1; @wd = @list[lin][wdn] # 列表号, 单词编号
       print "\n ----------------------------------------------------------------------------------------\n\n"
       puts " \033[1;7;44;37m* #{@wd[0].capitalize}\033[0m	\033[1;7;41;37m [#{@ln}], Word List %02d, # #{wdn + 1}\033[0m" % (lin + 1)
       declaim('', 3) # 清空当前朗读任务
-      declaim(@wd[0])
+      declaim(@wd[0], 1, 1)
 
       if lin == 25
         @wd[1].each {|x| e = x[1].split('||')[0]; print "\n \033[1;4;7;40;37m#{e}\033[0m"; declaim(e, 0)
@@ -78,8 +82,8 @@ loop do
           print "\033[1;41;37m例句\033[0m	\033[1;4;7;44;37m#{i + 1})\033[0m "
           puts x[0].gsub(/(?<foo>\b#{@wd[0][0..-2]}.*?\b)/i, "\033[7m\\k<foo>\033[0m")
           puts; print '	'; print x[1]; print '	'; puts "\033[1;7;47;37m#{x[2]}\033[0m"
-          puts; print ' 直接回车查看下一个例句或继续; 输入任意内容并回车以结束: '
-          break unless $stdin.gets == "\n"
+          puts; print ' 按 D 查看下一个例句或继续; 或按 S 以结束: '
+          break if getinput('sd') == 's'
         end
       end
       print "\n ----------------------------------------------------------------------------------------\n\n\033[s"
