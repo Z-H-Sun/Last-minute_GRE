@@ -1,16 +1,21 @@
 # Last-minute_GRE 简介
-Last-minute_GRE 是一个使用 Ruby 语言编写的、用于 GRE Verbal 及 Analytical Writing 考试准备的开源控制台程序。
+Last-minute_GRE 是一个使用 Ruby 语言编写的、用于 GRE Verbal 及 Analytical Writing 考试准备的跨平台开源控制台程序。
 
 ## 总述
 DicReader、DicSearcher、WordCount 是三个使用 Ruby 2.2 语言编写的开源控制台程序。本仓库内的程序运行平台为 Win 10 x64，且需要新版控制台支持（至少 Win10 2016 TH2 更新，开始支持 ANSI escape code），否则可能会出现显示不正确的问题。
 
-*适用于 Mac OS X 平台运行的相应程序正在改写和调试中。*
+*暂无 32 位可执行程序发布。若要在 32 位系统上使用请下载源码并配置 32 位 Ruby 环境。*
+
+*适用于 Mac OS X 平台运行的相应程序请移步[此仓库](https://github.com/Z-H-Sun/Last-minute_GRE_for_MAC/)。*
 
 ## 声明
 本程序词表来源为《新东方 2017 佛脚词汇表单词》，仅供学习交流之用，切勿用于商业用途。*此外，由于在字符串分割、处理的过程中，无法避免一些意料之外的因素，本程序所显示的内容可能会存在极少量的错误（已知的有：某些单词英文释义不完整、识别单词遗漏）*。虽然**不影响正常使用**，但并**不能**完全用于替代《佛脚词汇表》，建议对照查看。
 
-## 安装
+## 下载和安装
+[点此](https://github.com/Z-H-Sun/Last-minute_GRE/releases/download/v5.5/Last-minute.GRE.zip)下载最新版本 V5.5。
+
 其实并不能称为安装，**因为不会写入软件列表**。运行 Install.bat，程序会自动安装字体（等距更纱黑体 sarasa-mono-sc-r.ttf，用于提升 Windows 控制台用户界面的美观性和易读性），并在桌面上创建这三个程序的快捷方式。**安装字体的过程需要用户具有管理员权限。**
+
 *注：经过5.0至5.5升级后，实际运行界面可能与此处效果图略有不同。下同。*
 
 <p align="center">
